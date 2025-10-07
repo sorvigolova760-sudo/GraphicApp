@@ -8,44 +8,51 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Используем Ubuntu 22.04 вместо 24.04
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Python
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         
-    - name: Install Buildozer dependencies
+    - name: Install system dependencies
       run: |
-        sudo apt update
-        sudo apt install -y \
+        sudo apt-get update
+        sudo apt-get install -y \
           python3-pip \
+          build-essential \
+          git \
+          zip \
+          unzip \
+          openjdk-11-jdk \
           autoconf \
           libtool \
           pkg-config \
           zlib1g-dev \
           libncurses5-dev \
           libncursesw5-dev \
-          libtinfo5 \
           cmake \
           libffi-dev \
-          libssl-dev \
-          openjdk-11-jdk
+          libssl-dev
           
     - name: Install Buildozer
-      run: pip3 install buildozer cython==0.29.33
-        
-    - name: Build APK
       run: |
-        buildozer init
-        buildozer -v android debug
+        pip3 install --upgrade pip
+        pip3 install buildozer
+        pip3 install cython==0.29.33
         
-    - name: Upload APK
+    - name: Build APK with Buildozer
+      run: |
+        buildozer android debug
+        ls -la bin/
+        
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Android-APK
+        name: graph-builder-apk
         path: bin/*.apk
+        retention-days: 30
