@@ -43,11 +43,19 @@ jobs:
         pip3 install buildozer
         pip3 install cython==0.29.33
 
-    - name: Accept Android SDK licenses
+    - name: Setup Android SDK and accept licenses
       run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        mkdir -p ~/.buildozer/android/platform/android-sdk
+        unzip commandlinetools-linux-8512546_latest.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        
+        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+        
+        # Accept licenses
+        yes | sdkmanager --licenses
+        sdkmanager "build-tools;34.0.0" "platforms;android-33" "platform-tools"
 
     - name: Build APK with Buildozer
       run: |
