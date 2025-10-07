@@ -2,37 +2,24 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v4
+      
+    - name: Build with Buildozer
+      uses: artem-solovev/buildozer-action@v1
       with:
-        python-version: '3.9'
-        
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y python3-pip openjdk-11-jdk zlib1g-dev git zip
-        
-    - name: Install Buildozer
-      run: pip3 install buildozer
-        
-    - name: Accept Android licenses
-      run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        
-    - name: Build APK
-      run: |
-        buildozer -v android debug
+        work-dir: ./
+        buildozer-version: stable
+        buildozer-target: android debug
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
