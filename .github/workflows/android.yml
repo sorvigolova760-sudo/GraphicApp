@@ -14,21 +14,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up Python
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         
-    - name: Install system dependencies
+    - name: Install Buildozer dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt update
+        sudo apt install -y \
           python3-pip \
-          build-essential \
-          git \
-          zip \
-          unzip \
-          openjdk-11-jdk \
           autoconf \
           libtool \
           pkg-config \
@@ -38,37 +33,19 @@ jobs:
           libtinfo5 \
           cmake \
           libffi-dev \
-          libssl-dev
+          libssl-dev \
+          openjdk-11-jdk
           
     - name: Install Buildozer
-      run: |
-        pip3 install --upgrade pip
-        pip3 install buildozer
-        pip3 install cython==0.29.33
+      run: pip3 install buildozer cython==0.29.33
         
-    - name: Install Android SDK
+    - name: Build APK
       run: |
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        mkdir -p android-sdk/cmdline-tools
-        unzip commandlinetools-linux-8512546_latest.zip -d android-sdk/cmdline-tools
-        mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
-        export ANDROID_SDK_ROOT=$PWD/android-sdk
-        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+        buildozer init
+        buildozer -v android debug
         
-    - name: Accept Android licenses
-      run: |
-        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-        
-    - name: Build APK with Buildozer
-      run: |
-        buildozer android debug
-        ls -la bin/
-        
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: graph-builder-apk
+        name: Android-APK
         path: bin/*.apk
-        retention-days: 30
