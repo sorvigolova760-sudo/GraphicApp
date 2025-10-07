@@ -3,12 +3,10 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # Используем Ubuntu 22.04 вместо 24.04
+    runs-on: ubuntu-22.04
     
     steps:
     - name: Checkout code
@@ -44,10 +42,16 @@ jobs:
         pip3 install --upgrade pip
         pip3 install buildozer
         pip3 install cython==0.29.33
-        
+
+    - name: Accept Android SDK licenses
+      run: |
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
     - name: Build APK with Buildozer
       run: |
-        buildozer android debug
+        buildozer -v android debug
         ls -la bin/
         
     - name: Upload APK artifact
