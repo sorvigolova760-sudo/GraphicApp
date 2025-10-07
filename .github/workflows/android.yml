@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,60 +11,31 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Set up Python
+    
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip \
-          build-essential \
-          git \
-          zip \
-          unzip \
-          openjdk-11-jdk \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev \
-          libncurses5-dev \
-          libncursesw5-dev \
-          cmake \
-          libffi-dev \
-          libssl-dev
-          
+        sudo apt update
+        sudo apt install -y python3-pip openjdk-11-jdk zlib1g-dev git zip
+        
     - name: Install Buildozer
-      run: |
-        pip3 install --upgrade pip
-        pip3 install buildozer
-        pip3 install cython==0.29.33
-
-    - name: Setup Android SDK and accept licenses
-      run: |
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        mkdir -p ~/.buildozer/android/platform/android-sdk
-        unzip commandlinetools-linux-8512546_latest.zip -d ~/.buildozer/android/platform/android-sdk/cmdline-tools
-        mv ~/.buildozer/android/platform/android-sdk/cmdline-tools/cmdline-tools ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+      run: pip3 install buildozer
         
-        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
-        export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+    - name: Accept Android licenses
+      run: |
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
         
-        # Accept licenses
-        yes | sdkmanager --licenses
-        sdkmanager "build-tools;34.0.0" "platforms;android-33" "platform-tools"
-
-    - name: Build APK with Buildozer
+    - name: Build APK
       run: |
         buildozer -v android debug
-        ls -la bin/
         
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: graph-builder-apk
+        name: Android-App
         path: bin/*.apk
-        retention-days: 30
