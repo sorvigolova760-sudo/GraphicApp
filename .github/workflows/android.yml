@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y zip unzip git openjdk-17-jdk
+          sudo apt-get install -y zip unzip git curl openjdk-17-jdk
 
       - name: Prepare Android SDK & environment
         run: |
@@ -29,17 +29,27 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
+
+          echo "📦 Downloading Android command-line tools..."
           curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip sdk.zip -d latest
+          unzip sdk.zip -d tools
           rm sdk.zip
 
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          # Правильная структура: .../cmdline-tools/latest/bin/sdkmanager
+          mv tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+
+          echo "✅ Accepting SDK licenses..."
+          yes | sdkmanager --licenses || true
+
+          echo "⬇️ Installing platform tools and build tools..."
+          yes | sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
       - name: Install Buildozer and p4a
         run: |
           pip install --upgrade pip
-          pip install buildozer cython
+          pip install buildozer
           pip install "Cython<3.0" "pyjnius>=1.5.0" "python-for-android>=2024.3"
 
       - name: Initialize Buildozer
