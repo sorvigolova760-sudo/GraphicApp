@@ -18,7 +18,7 @@ log_level = 2
 log_level = 2
 warn_on_root = 1
 
-# Критически важные настройки
+# Используем стабильные версии
 p4a.branch = develop
 android.ndk = 25b
 android.sdk = 33
