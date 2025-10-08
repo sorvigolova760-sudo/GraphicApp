@@ -33,21 +33,28 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-          mkdir -p $ANDROID_SDK_ROOT/tools/bin
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
 
-          # Устанавливаем SDK через командную утилиту
-          yes | wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          unzip -o cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools/latest
+          echo "⬇️ Downloading Android command line tools..."
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+
+          echo "📦 Unzipping..."
+          unzip -qo cmdline-tools.zip -d cmdline-tools-temp
           rm cmdline-tools.zip
 
-          # Создаем симлинки для совместимости с Buildozer
+          # создаем корректную структуру latest/bin/sdkmanager
+          mv cmdline-tools-temp/cmdline-tools latest
+          rm -rf cmdline-tools-temp
+
+          # совместимость со старым путём Buildozer
+          mkdir -p $ANDROID_SDK_ROOT/tools/bin
           ln -sf $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
           ln -sf $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager $ANDROID_SDK_ROOT/tools/bin/avdmanager
 
-          # Проверяем установку
+          echo "✅ Checking installations:"
           java -version
-          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --version
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version
 
       - name: Install Android SDK components
         run: |
@@ -64,11 +71,7 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-          # Проверяем доступность SDK
-          java -version
-          sdkmanager --version
-
-          # Сборка
+          echo "🧱 Building the APK..."
           buildozer android debug
 
       - name: Upload APK artifact
