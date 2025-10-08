@@ -3,13 +3,11 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
@@ -27,12 +25,21 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython virtualenv
 
+      - name: Install Android SDK & NDK
+        run: |
+          mkdir -p ~/.buildozer/android/platform
+          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+          export ANDROID_NDK_ROOT=$HOME/.buildozer/android/platform/android-ndk
+          mkdir -p $ANDROID_SDK_ROOT $ANDROID_NDK_ROOT
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" || true
+
       - name: Build APK
         run: |
-          buildozer init || true
+          export PATH=$PATH:$HOME/.local/bin
           buildozer android debug
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: GraphPlotter-APK
