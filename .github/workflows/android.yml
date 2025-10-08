@@ -35,10 +35,15 @@ jobs:
           unzip sdk.zip -d tools
           rm sdk.zip
 
-          # Правильная структура: .../cmdline-tools/latest/bin/sdkmanager
-          mv tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          # Универсально ищем sdkmanager
+          SDKMANAGER_PATH=$(find $ANDROID_SDK_ROOT -type f -name "sdkmanager" | head -n 1)
+          if [ -z "$SDKMANAGER_PATH" ]; then
+            echo "❌ sdkmanager not found!"
+            exit 1
+          fi
+          echo "✅ sdkmanager found at: $SDKMANAGER_PATH"
 
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+          export PATH=$(dirname "$SDKMANAGER_PATH"):$PATH
 
           echo "✅ Accepting SDK licenses..."
           yes | sdkmanager --licenses || true
@@ -60,7 +65,7 @@ jobs:
         run: |
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
           echo "🧱 Building APK..."
           buildozer android debug --p4a-extra-args="--recipes=pyjnius"
