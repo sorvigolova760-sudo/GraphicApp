@@ -2,12 +2,13 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -16,54 +17,40 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y zip unzip git curl openjdk-17-jdk
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            zip unzip wget git openjdk-17-jdk \
+            autoconf libtool pkg-config zlib1g-dev \
+            libncurses5-dev libtinfo5 cmake \
+            python3-pip python3-setuptools
 
-      - name: Prepare Android SDK & environment
+      - name: Install Python dependencies
         run: |
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          cd $ANDROID_SDK_ROOT/cmdline-tools
+          python3 -m pip install --upgrade pip
+          pip install --upgrade buildozer cython==0.29.33 virtualenv
 
-          echo "📦 Downloading Android command-line tools..."
-          curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip sdk.zip -d latest
-          rm sdk.zip
-
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-
-          echo "✅ Accepting SDK licenses..."
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
-
-          echo "⬇️ Installing platform tools and build tools..."
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-
-      - name: Install Buildozer and dependencies
+      - name: Clean previous builds
         run: |
-          pip install --upgrade pip
-          pip install buildozer
-          pip install "Cython<3.0" "pyjnius>=1.5.0" "python-for-android>=2024.3"
+          rm -rf .buildozer
+          buildozer android clean
 
-      - name: Initialize Buildozer
+      - name: Build APK with Buildozer
         run: |
-          buildozer init || true
-
-      - name: Build APK
-        run: |
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-
-          echo "🧱 Building APK..."
-          buildozer android debug --p4a-extra-args="--recipes=pyjnius" --verbose
+          export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
+          export PATH=$JAVA_HOME/bin:$PATH
+          
+          echo "🧱 Building APK for armeabi-v7a..."
+          buildozer -v android debug
+          
+        timeout-minutes: 30
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GraphicApp-debug-apk
+          name: GraphPlotter-armeabi-v7a
           path: bin/*.apk
+          retention-days: 7
