@@ -2,13 +2,12 @@ name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -17,62 +16,44 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
-          apt-get update -qq && apt-get install -y --no-install-recommends \
-            zip unzip wget git openjdk-17-jdk
-          
-          python3 -m pip install --upgrade pip
-          pip install --upgrade buildozer cython virtualenv
+          sudo apt-get update -y
+          sudo apt-get install -y zip unzip git openjdk-17-jdk
 
       - name: Prepare Android SDK & environment
         run: |
-          export JAVA_HOME=$JAVA_HOME_17_X64
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
+          curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip sdk.zip -d latest
+          rm sdk.zip
 
-          echo "⬇️ Downloading Android command line tools..."
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
-          echo "📦 Unzipping..."
-          unzip -qo cmdline-tools.zip -d cmdline-tools-temp
-          rm cmdline-tools.zip
-
-          # создаем корректную структуру latest/bin/sdkmanager
-          mv cmdline-tools-temp/cmdline-tools latest
-          rm -rf cmdline-tools-temp
-
-          # совместимость со старым путём Buildozer
-          mkdir -p $ANDROID_SDK_ROOT/tools/bin
-          ln -sf $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
-          ln -sf $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager $ANDROID_SDK_ROOT/tools/bin/avdmanager
-
-          echo "✅ Checking installations:"
-          java -version
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version
-
-      - name: Install Android SDK components
+      - name: Install Buildozer and p4a
         run: |
-          export JAVA_HOME=$JAVA_HOME_17_X64
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          pip install --upgrade pip
+          pip install buildozer cython
+          pip install "Cython<3.0" "pyjnius>=1.5.0" "python-for-android>=2024.3"
 
-          yes | sdkmanager --licenses
-          yes | sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+      - name: Initialize Buildozer
+        run: |
+          buildozer init || true
 
       - name: Build APK
         run: |
-          export JAVA_HOME=$JAVA_HOME_17_X64
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-          echo "🧱 Building the APK..."
-          buildozer android debug
+          echo "🧱 Building APK..."
+          buildozer android debug --p4a-extra-args="--recipes=pyjnius"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
