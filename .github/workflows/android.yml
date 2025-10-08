@@ -13,7 +13,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -27,21 +27,22 @@ jobs:
           pkg-config \
           zlib1g-dev
 
-    - name: Install Buildozer
-      run: |
-        pip3 install buildozer cython==0.29.33
+    - name: Install python-for-android
+      run: pip3 install python-for-android
 
-    - name: Download dependencies first
+    - name: Build APK with p4a
       run: |
-        buildozer android update
-
-    - name: Build APK
-      run: |
-        buildozer android debug
-      timeout-minutes: 45
+        p4a apk \
+          --requirements=python3,kivy \
+          --private=$(pwd) \
+          --package=org.example.graphplotter \
+          --name="Graph Plotter" \
+          --version=1.0 \
+          --bootstrap=sdl2 \
+          --dist_name=graphplotter
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-apk
-        path: bin/*.apk
+        path: dist/*.apk
