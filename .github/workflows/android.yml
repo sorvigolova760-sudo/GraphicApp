@@ -23,10 +23,9 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            zip unzip wget git \
+            zip unzip git \
             autoconf libtool pkg-config zlib1g-dev \
-            libncurses5-dev libtinfo5 cmake \
-            python3-pip python3-setuptools
+            libncurses5-dev libtinfo5
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -37,38 +36,12 @@ jobs:
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install --upgrade buildozer cython==0.29.33 virtualenv
+          pip install --upgrade buildozer cython==0.29.33
 
-      - name: Setup Android SDK
+      - name: Build APK with Buildozer (auto SDK)
         run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          
-          # Скачиваем command line tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          mkdir -p android-sdk
-          unzip -q cmdline-tools.zip -d android-sdk
-          
-          # Правильная структура папок для Android SDK
-          mkdir -p android-sdk/cmdline-tools
-          mv android-sdk/cmdline-tools android-sdk/cmdline-tools/latest
-          
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-          
-          # Принимаем лицензии
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-          
-          # Устанавливаем компоненты
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;33.0.2" "platforms;android-33" "platform-tools"
-          
-          rm cmdline-tools.zip
-
-      - name: Build APK with Buildozer
-        run: |
-          export ANDROID_SDK_ROOT=$HOME/android-sdk
-          export ANDROID_HOME=$ANDROID_SDK_ROOT
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/33.0.2:$PATH
+          export JAVA_HOME=$JAVA_HOME_17_X64
+          export PATH=$JAVA_HOME/bin:$PATH
           
           echo "🧱 Building APK for armeabi-v7a..."
           buildozer -v android debug
