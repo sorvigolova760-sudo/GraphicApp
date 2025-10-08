@@ -48,16 +48,13 @@ jobs:
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.android/licenses/android-sdk-preview-license
           echo "d975f751698a77b662f1254ddbeed3901e976f5a" > ~/.android/licenses/intel-android-extra-license
 
-      - name: Initialize Buildozer and download dependencies
+      - name: Download python-for-android dependencies
         run: |
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
           
-          echo "📥 Initializing Buildozer..."
-          buildozer init
-          
-          echo "📥 Downloading python-for-android..."
-          # Принудительно запускаем процесс загрузки p4a
+          echo "📥 Downloading python-for-android and dependencies..."
+          # Запускаем процесс загрузки p4a без инициализации
           buildozer android update
           
         timeout-minutes: 10
