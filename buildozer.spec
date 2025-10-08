@@ -17,7 +17,3 @@ log_level = 2
 [buildozer]
 log_level = 2
 warn_on_root = 1
-
-# Используем стабильные версии
-p4a.branch = develop
-android.ndk = 25b
