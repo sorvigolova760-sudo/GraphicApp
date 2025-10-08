@@ -5,16 +5,19 @@ package.domain = org.example
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 version = 1.0
-requirements = python3,kivy,numpy
+requirements = python3,kivy==2.3.0,numpy==1.24.4,cython==0.29.33
 orientation = portrait
 fullscreen = 1
-android.api = 35
+android.api = 33
 android.minapi = 21
-android.archs = arm64-v8a,armeabi-v7a
+android.arch = armeabi-v7a
 android.permissions = INTERNET
 log_level = 2
 
 [buildozer]
 log_level = 2
 warn_on_root = 1
-# Убираем абсолютные пути — Buildozer сам создаст .buildozer/android/platform/*
+
+# Критически важные настройки для решения проблемы с Cython
+p4a.branch = develop
+android.ndk = 25b
