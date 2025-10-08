@@ -48,9 +48,10 @@ jobs:
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           mkdir -p android-sdk
           unzip -q cmdline-tools.zip -d android-sdk
-          mkdir -p android-sdk/cmdline-tools/latest
-          mv android-sdk/cmdline-tools/* android-sdk/cmdline-tools/latest/
-          rm cmdline-tools.zip
+          
+          # Правильная структура папок для Android SDK
+          mkdir -p android-sdk/cmdline-tools
+          mv android-sdk/cmdline-tools android-sdk/cmdline-tools/latest
           
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
@@ -60,6 +61,8 @@ jobs:
           
           # Устанавливаем компоненты
           sdkmanager --sdk_root=$ANDROID_SDK_ROOT "build-tools;33.0.2" "platforms;android-33" "platform-tools"
+          
+          rm cmdline-tools.zip
 
       - name: Build APK with Buildozer
         run: |
