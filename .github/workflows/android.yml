@@ -33,10 +33,30 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install --upgrade buildozer cython==0.29.33 virtualenv
 
+      - name: Setup Android SDK and accept licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          
+          # Скачиваем и настраиваем Android Command Line Tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          mkdir -p cmdline-tools
+          unzip -q cmdline-tools.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools cmdline-tools/latest
+          rm cmdline-tools.zip
+          
+          # Принимаем все лицензии автоматически
+          yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses
+          
+          # Устанавливаем необходимые компоненты
+          cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "build-tools;33.0.2" "platforms;android-33" "platform-tools" "tools"
+
       - name: Build APK with Buildozer
         run: |
           export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
-          export PATH=$JAVA_HOME/bin:$PATH
+          export ANDROID_SDK_ROOT=$HOME/android-sdk
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
+          export PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/33.0.2:$PATH
           
           echo "🧱 Building APK for armeabi-v7a..."
           buildozer -v android debug
