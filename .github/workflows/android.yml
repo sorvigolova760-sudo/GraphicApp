@@ -23,9 +23,10 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            zip unzip git \
+            zip unzip git curl \
             autoconf libtool pkg-config zlib1g-dev \
-            libncurses5-dev libtinfo5
+            libncurses5-dev libtinfo5 cmake \
+            python3-pip python3-setuptools
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -38,7 +39,25 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install --upgrade buildozer cython==0.29.33
 
-      - name: Build APK with Buildozer (auto SDK)
+      - name: Initialize Buildozer and download dependencies
+        run: |
+          export JAVA_HOME=$JAVA_HOME_17_X64
+          export PATH=$JAVA_HOME/bin:$PATH
+          
+          # Инициализируем Buildozer если нужно
+          if [ ! -f "buildozer.spec" ]; then
+            buildozer init
+          fi
+          
+          # Позволяем Buildozer самому скачать SDK и NDK
+          echo "📥 Letting Buildozer download Android SDK/NDK..."
+          buildozer android update
+          
+        env:
+          # Принимаем лицензии автоматически
+          ACCEPT_LICENSE: "android-sdk-license-5be876d5"
+
+      - name: Build APK with Buildozer
         run: |
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
@@ -47,6 +66,8 @@ jobs:
           buildozer -v android debug
           
         timeout-minutes: 30
+        env:
+          ACCEPT_LICENSE: "android-sdk-license-5be876d5"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
