@@ -34,10 +34,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Python dependencies
+      - name: Install latest Buildozer and dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install --upgrade buildozer cython==0.29.33
+          # Устанавливаем последнюю версию Buildozer из git
+          pip install --upgrade cython==0.29.33
+          pip install https://github.com/kivy/buildozer/archive/master.zip
 
       - name: Download and setup Android SDK
         run: |
@@ -59,15 +61,14 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/android-sdk
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
           
-          # Принимаем лицензии в неинтерактивном режиме
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
+          echo "📋 Checking sdkmanager version..."
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --version
+          
+          # Принимаем лицензии
+          yes | sdkmanager --licenses
           
           # Устанавливаем необходимые компоненты
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;33.0.2" "platforms;android-33"
-          
-          # Создаем символические ссылки для совместимости
-          mkdir -p $ANDROID_SDK_ROOT/tools/bin
-          ln -sf $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+          sdkmanager "platform-tools" "build-tools;33.0.2" "platforms;android-33"
 
       - name: Build APK with Buildozer
         run: |
