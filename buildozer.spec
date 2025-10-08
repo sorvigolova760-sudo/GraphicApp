@@ -18,7 +18,10 @@ log_level = 2
 log_level = 2
 warn_on_root = 1
 
-# Используем стабильные версии
-p4a.branch = develop
+# ЯВНО указываем версии для избежания автоматического выбора
 android.ndk = 25b
 android.sdk = 33
+p4a.branch = develop
+
+# Принудительно указываем версию build-tools
+android.build_tools_version = 33.0.2
