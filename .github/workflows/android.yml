@@ -39,29 +39,32 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install --upgrade buildozer cython==0.29.33
 
-      - name: Pre-accept Android licenses
+      - name: Clean previous builds and set up Android licenses
         run: |
-          mkdir -p "$HOME/.android"
-          touch "$HOME/.android/repositories.cfg"
+          # Полная очистка
+          rm -rf ~/.buildozer
+          rm -rf ~/.android
           
-          # Создаем файл с принятыми лицензиями
-          mkdir -p "$HOME/.android/licenses"
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$HOME/.android/licenses/android-sdk-license"
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$HOME/.android/licenses/android-sdk-preview-license"
-          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > "$HOME/.android/licenses/intel-android-extra-license"
+          # Создаем структуру для лицензий
+          mkdir -p ~/.android/licenses
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > ~/.android/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.android/licenses/android-sdk-preview-license
+          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > ~/.android/licenses/intel-android-extra-license
+          echo "601085b94cd77f0b54ff86406957099ebe79c4d6" > ~/.android/licenses/android-sdk-armeabi-v7a-license
 
-      - name: Build APK with Buildozer
+      - name: Build APK with forced versions
         run: |
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
           
-          # Устанавливаем переменные для автоматического принятия лицензий
-          export ANDROID_LICENSE_STORE="$HOME/.android/licenses"
+          # Устанавливаем переменные для принудительного использования правильных версий
+          export ANDROIDAPI=33
+          export ANDROIDMINAPI=21
           
-          echo "🧱 Building APK for armeabi-v7a..."
+          echo "🧱 Building APK with forced Android API 33..."
           buildozer -v android debug
           
-        timeout-minutes: 30
+        timeout-minutes: 35
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
