@@ -33,11 +33,6 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install --upgrade buildozer cython==0.29.33 virtualenv
 
-      - name: Clean previous builds
-        run: |
-          rm -rf .buildozer
-          buildozer android clean
-
       - name: Build APK with Buildozer
         run: |
           export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
