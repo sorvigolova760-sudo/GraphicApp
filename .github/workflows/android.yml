@@ -34,10 +34,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Python dependencies
+      - name: Install latest Buildozer from git
         run: |
           python3 -m pip install --upgrade pip
-          pip install --upgrade buildozer cython==0.29.33
+          pip install --upgrade cython==0.29.33 virtualenv
+          # Устанавливаем последнюю версию Buildozer из репозитория
+          pip install git+https://github.com/kivy/buildozer.git
 
       - name: Pre-accept Android licenses
         run: |
@@ -46,14 +48,24 @@ jobs:
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.android/licenses/android-sdk-preview-license
           echo "d975f751698a77b662f1254ddbeed3901e976f5a" > ~/.android/licenses/intel-android-extra-license
 
-      - name: Build APK with Buildozer (auto SDK)
+      - name: Initialize Buildozer and download dependencies
         run: |
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
           
-          # Полная очистка перед сборкой
-          rm -rf .buildozer
-          buildozer android clean
+          echo "📥 Initializing Buildozer..."
+          buildozer init
+          
+          echo "📥 Downloading python-for-android..."
+          # Принудительно запускаем процесс загрузки p4a
+          buildozer android update
+          
+        timeout-minutes: 10
+
+      - name: Build APK with Buildozer
+        run: |
+          export JAVA_HOME=$JAVA_HOME_17_X64
+          export PATH=$JAVA_HOME/bin:$PATH
           
           echo "🧱 Building APK for armeabi-v7a..."
           buildozer -v android debug
