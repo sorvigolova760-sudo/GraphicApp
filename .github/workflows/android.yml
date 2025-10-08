@@ -39,35 +39,29 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install --upgrade buildozer cython==0.29.33
 
-      - name: Initialize Buildozer and download dependencies
+      - name: Pre-accept Android licenses
         run: |
-          export JAVA_HOME=$JAVA_HOME_17_X64
-          export PATH=$JAVA_HOME/bin:$PATH
+          mkdir -p "$HOME/.android"
+          touch "$HOME/.android/repositories.cfg"
           
-          # Инициализируем Buildozer если нужно
-          if [ ! -f "buildozer.spec" ]; then
-            buildozer init
-          fi
-          
-          # Позволяем Buildozer самому скачать SDK и NDK
-          echo "📥 Letting Buildozer download Android SDK/NDK..."
-          buildozer android update
-          
-        env:
-          # Принимаем лицензии автоматически
-          ACCEPT_LICENSE: "android-sdk-license-5be876d5"
+          # Создаем файл с принятыми лицензиями
+          mkdir -p "$HOME/.android/licenses"
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$HOME/.android/licenses/android-sdk-license"
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$HOME/.android/licenses/android-sdk-preview-license"
+          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > "$HOME/.android/licenses/intel-android-extra-license"
 
       - name: Build APK with Buildozer
         run: |
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
           
+          # Устанавливаем переменные для автоматического принятия лицензий
+          export ANDROID_LICENSE_STORE="$HOME/.android/licenses"
+          
           echo "🧱 Building APK for armeabi-v7a..."
           buildozer -v android debug
           
         timeout-minutes: 30
-        env:
-          ACCEPT_LICENSE: "android-sdk-license-5be876d5"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
