@@ -1,48 +1,29 @@
-name: Build Android APK
+name: Build with Community Docker
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install dependencies
+    - uses: actions/checkout@v4
+    
+    - name: Build with Kivy Docker
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          python3-pip \
-          openjdk-17-jdk \
-          git \
-          zip \
-          unzip \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev
+        docker run --rm -it \
+          -v $PWD:/src \
+          -w /src \
+          kivy/kivy:latest \
+          /bin/bash -c "
+          apt update && apt install -y python3-pip openjdk-17-jdk &&
+          pip install buildozer &&
+          buildozer android debug
+          "
 
-    - name: Install python-for-android
-      run: pip3 install python-for-android
-
-    - name: Build APK with p4a
-      run: |
-        p4a apk \
-          --requirements=python3,kivy \
-          --private=$(pwd) \
-          --package=org.example.graphplotter \
-          --name="Graph Plotter" \
-          --version=1.0 \
-          --bootstrap=sdl2 \
-          --dist_name=graphplotter
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
-        name: app-apk
-        path: dist/*.apk
+        name: app-docker
+        path: bin/*.apk
